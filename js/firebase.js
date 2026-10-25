@@ -2,17 +2,18 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-// REQUIRED CONFIGURATION: replace every REPLACE_WITH_... value with the values from
-// Firebase console > Project settings > General > Your apps > Web app > SDK setup and configuration.
-// These web config values identify your project; they are not admin secrets.
-// Security comes from firestore.rules and the Cloud Function. NEVER put service-account keys here.
+// Web app config. These values identify the project and are not admin secrets.
+// Security comes from firestore.rules and the Cloud Function. Never put service-account keys here.
 export const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOUR_API_KEY",
-  authDomain: "REPLACE_WITH_YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
-  messagingSenderId: "REPLACE_WITH_YOUR_SENDER_ID",
-  appId: "REPLACE_WITH_YOUR_APP_ID"
+  apiKey: "AIzaSyBsLUYT2Nxvuse9gxhMuTLjsvyvOu92yU8",
+  authDomain: "project-antisemitism.firebaseapp.com",
+  projectId: "project-antisemitism",
+  storageBucket: "project-antisemitism.firebasestorage.app",
+  messagingSenderId: "739817942010",
+  appId: "1:739817942010:web:3afcf2858fa2804ebb5243",
+  measurementId: "G-TN848G7VXT"
 };
 
 // Must match the region of the deployed function (functions/index.js uses us-central1).
@@ -24,3 +25,6 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app, FUNCTIONS_REGION);
+
+// Analytics is optional and runs only where the browser supports it. A failure never affects the app.
+isSupported().then((ok) => { if (ok) getAnalytics(app); }).catch(() => {});
