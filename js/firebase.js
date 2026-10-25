@@ -1,11 +1,13 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
-import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-// Web app config. These values identify the project and are not admin secrets.
-// Security comes from firestore.rules and the Cloud Function. Never put service-account keys here.
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+
+// Pulse Messenger — Firebase configuration
 export const firebaseConfig = {
   apiKey: "AIzaSyBsLUYT2Nxvuse9gxhMuTLjsvyvOu92yU8",
   authDomain: "project-antisemitism.firebaseapp.com",
@@ -16,15 +18,34 @@ export const firebaseConfig = {
   measurementId: "G-TN848G7VXT"
 };
 
-// Must match the region of the deployed function (functions/index.js uses us-central1).
+// Cloud Functions deployment region
 export const FUNCTIONS_REGION = "us-central1";
 
-export const isConfigured = !Object.values(firebaseConfig).some((v) => String(v).startsWith("REPLACE_WITH"));
+// Validate required configuration values
+const requiredKeys = [
+  "apiKey",
+  "authDomain",
+  "projectId",
+  "appId",
+  "messagingSenderId"
+];
 
-export const app = initializeApp(firebaseConfig);
+export const isConfigured = requiredKeys.every((key) => {
+  const value = firebaseConfig[key];
+
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    !value.includes("REPLACE_WITH")
+  );
+});
+
+// Initialize Firebase only once
+export const app = getApps().length
+  ? getApp()
+  : initializeApp(firebaseConfig);
+
+// Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app, FUNCTIONS_REGION);
-
-// Analytics is optional and runs only where the browser supports it. A failure never affects the app.
-isSupported().then((ok) => { if (ok) getAnalytics(app); }).catch(() => {});
