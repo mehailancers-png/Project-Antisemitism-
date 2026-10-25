@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f5bea">
+  <title>Pulse Messenger</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="netBanner" class="net-banner" role="status" hidden>You are offline. Messages cannot be sent until you reconnect.</div>
+  <div id="toast" class="toast" role="alert" hidden></div>
+  <div id="loading" class="splash"><div class="spinner" role="status" aria-label="Loading"></div></div>
+
+  <main id="authView" class="auth" hidden>
+    <div class="auth-card">
+      <h1>Pulse</h1>
+      <p class="muted">Simple one-to-one text messaging.</p>
+      <p id="configError" class="form-error" role="alert" hidden></p>
+
+      <div class="tabs" role="tablist" aria-label="Account">
+        <button type="button" role="tab" id="tabLogin" aria-selected="true" aria-controls="loginForm">Log in</button>
+        <button type="button" role="tab" id="tabRegister" aria-selected="false" aria-controls="registerForm">Register</button>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" autocomplete="email" required>
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required>
+        <p id="loginError" class="form-error" role="alert" hidden></p>
+        <button id="loginBtn" class="btn primary block" type="submit">Log in</button>
+      </form>
+
+      <form id="registerForm" novalidate hidden>
+        <label for="regName">Display name</label>
+        <input id="regName" type="text" autocomplete="nickname" minlength="2" maxlength="40" required>
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" autocomplete="email" required>
+        <label for="regPassword">Password (min. 6 characters)</label>
+        <input id="regPassword" type="password" autocomplete="new-password" minlength="6" required>
+        <p id="registerError" class="form-error" role="alert" hidden></p>
+        <button id="registerBtn" class="btn primary block" type="submit">Create account</button>
+      </form>
+    </div>
+  </main>
+
+  <div id="appView" class="app" hidden>
+    <aside id="listPane" class="pane list-pane" aria-label="Conversations">
+      <header class="pane-header">
+        <h2>Chats</h2>
+        <div class="actions">
+          <button id="newChatBtn" class="btn small primary" type="button" aria-expanded="false" aria-controls="newChatPanel">New chat</button>
+          <button id="logoutBtn" class="btn small ghost" type="button">Log out</button>
+        </div>
+      </header>
+      <p id="meName" class="muted me"></p>
+
+      <section id="newChatPanel" class="new-chat" hidden>
+        <form id="searchForm" role="search">
+          <label for="searchInput">Find a user by display name</label>
+          <div class="row">
+            <input id="searchInput" type="search" minlength="2" maxlength="40" placeholder="At least 2 letters" autocomplete="off">
+            <button class="btn" type="submit">Search</button>
+          </div>
+        </form>
+        <p id="searchStatus" class="muted" role="status"></p>
+        <ul id="searchResults" class="list"></ul>
+      </section>
+
+      <div id="convLoading" class="center"><div class="spinner" role="status" aria-label="Loading conversations"></div></div>
+      <p id="convEmpty" class="empty" hidden>No conversations yet. Choose “New chat” to find someone.</p>
+      <ul id="convList" class="list scroll"></ul>
+    </aside>
+
+    <section id="chatPane" class="pane chat-pane" aria-label="Chat">
+      <div id="chatPlaceholder" class="empty center-fill">Select a conversation or start a new one.</div>
+      <div id="chatView" class="chat-view" hidden>
+        <header class="pane-header">
+          <button id="backBtn" class="icon-btn" type="button" aria-label="Back to conversations">&#8592;</button>
+          <h2 id="chatTitle"></h2>
+        </header>
+        <div id="messageScroll" class="messages-wrap">
+          <div id="msgLoading" class="center"><div class="spinner" role="status" aria-label="Loading messages"></div></div>
+          <p id="msgEmpty" class="empty" hidden>No messages yet. Say hello!</p>
+          <ul id="messages" class="messages" aria-live="polite"></ul>
+        </div>
+        <form id="composer" class="composer">
+          <label for="msgInput" class="sr-only">Message</label>
+          <textarea id="msgInput" rows="1" maxlength="2000" placeholder="Type a message"></textarea>
+          <button id="sendBtn" class="btn primary" type="submit" disabled>Send</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
