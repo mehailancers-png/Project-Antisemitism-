@@ -1,23 +1,26 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
+// REQUIRED CONFIGURATION: replace every REPLACE_WITH_... value with the values from
+// Firebase console > Project settings > General > Your apps > Web app > SDK setup and configuration.
+// These web config values identify your project; they are not admin secrets.
+// Security comes from firestore.rules and the Cloud Function. NEVER put service-account keys here.
 export const firebaseConfig = {
-  apiKey: "AIzaSyBsLUYT2Nxvuse9gxhMuTLjsvyvOu92yU8",
-  authDomain: "project-antisemitism.firebaseapp.com",
-  projectId: "project-antisemitism",
-  storageBucket: "project-antisemitism.firebasestorage.app",
-  messagingSenderId: "739817942010",
-  appId: "1:739817942010:web:3afcf2858fa2804ebb5243",
-  measurementId: "G-TN848G7VXT"
+  apiKey: "REPLACE_WITH_YOUR_API_KEY",
+  authDomain: "REPLACE_WITH_YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
+  messagingSenderId: "REPLACE_WITH_YOUR_SENDER_ID",
+  appId: "REPLACE_WITH_YOUR_APP_ID"
 };
 
-export const isConfigured = Boolean(
-  firebaseConfig.apiKey &&
-  firebaseConfig.projectId &&
-  firebaseConfig.appId
-);
+// Must match the region of the deployed function (functions/index.js uses us-central1).
+export const FUNCTIONS_REGION = "us-central1";
+
+export const isConfigured = !Object.values(firebaseConfig).some((v) => String(v).startsWith("REPLACE_WITH"));
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const functions = getFunctions(app, FUNCTIONS_REGION);
