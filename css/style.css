@@ -12,10 +12,13 @@ body {
   background: var(--bg); color: var(--text);
 }
 h1, h2 { margin: 0; }
+a { color: var(--primary); }
 button, input, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid #8fa8ff; outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .muted { color: var(--muted); font-size: .9rem; margin: 0; }
+.hint { margin-top: 6px; }
+.fine-print { color: var(--muted); font-size: .75rem; margin: 16px 0 0; }
 
 .splash { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); z-index: 50; }
 .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
@@ -32,7 +35,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .btn.primary:hover { background: var(--primary-dark); }
 .btn.ghost { background: transparent; }
-.btn.small { padding: 6px 10px; font-size: .88rem; }
+.btn.small { padding: 6px 10px; font-size: .88rem; white-space: nowrap; }
 .btn.block { width: 100%; margin-top: 8px; }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .icon-btn { border: 0; background: transparent; font-size: 1.5rem; line-height: 1; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
@@ -40,15 +43,13 @@ button, input, textarea { font: inherit; color: inherit; }
 input, textarea { width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
 label { display: block; font-size: .88rem; font-weight: 600; margin: 12px 0 4px; }
 .row { display: flex; gap: 8px; }
+.row.split { justify-content: space-between; margin-top: 10px; }
 .form-error { background: var(--danger-bg); color: var(--danger); padding: 8px 10px; border-radius: 8px; font-size: .9rem; margin: 10px 0 0; }
 
 /* Auth */
 .auth { min-height: 100%; display: grid; place-items: center; padding: 20px; }
 .auth-card { width: 100%; max-width: 400px; background: var(--surface); padding: 28px 24px; border-radius: 18px; box-shadow: 0 8px 30px rgba(24, 32, 51, .08); }
 .auth-card h1 { color: var(--primary); }
-.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--bg); padding: 4px; border-radius: 12px; margin: 18px 0 4px; }
-.tabs button { border: 0; background: transparent; padding: 9px; border-radius: 9px; font-weight: 600; cursor: pointer; color: var(--muted); }
-.tabs button[aria-selected="true"] { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
 /* App layout (mobile first) */
 .app { height: 100dvh; display: grid; grid-template-columns: 1fr; background: var(--surface); }
@@ -66,13 +67,15 @@ body.chat-open .chat-pane { display: flex; }
 .list button.item { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--border); background: transparent; padding: 12px 14px; cursor: pointer; }
 .list button.item:hover, .list button.item[aria-current="true"] { background: #eef2fd; }
 .item-top { display: flex; justify-content: space-between; gap: 8px; }
-.item-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-name { font-weight: 700; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-time { color: var(--muted); font-size: .78rem; flex-shrink: 0; }
 .item-sub { color: var(--muted); font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .empty { color: var(--muted); text-align: center; padding: 28px 20px; margin: 0; }
 .new-chat { padding: 10px 14px 12px; border-bottom: 1px solid var(--border); background: #f8f9fd; }
 .new-chat label { margin-top: 0; }
-.new-chat .list { max-height: 220px; overflow-y: auto; margin-top: 6px; }
+.found-card { margin-top: 10px; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; }
+.contact-panel { padding: 8px 14px 12px; border-bottom: 1px solid var(--border); background: #f8f9fd; }
+.contact-panel label { margin-top: 6px; }
 
 /* Chat */
 .chat-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
