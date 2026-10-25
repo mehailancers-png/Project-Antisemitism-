@@ -15,33 +15,33 @@
   <main id="authView" class="auth" hidden>
     <div class="auth-card">
       <h1>Pulse</h1>
-      <p class="muted">Simple one-to-one text messaging.</p>
+      <p class="muted">Sign in with your mobile number.</p>
       <p id="configError" class="form-error" role="alert" hidden></p>
 
-      <div class="tabs" role="tablist" aria-label="Account">
-        <button type="button" role="tab" id="tabLogin" aria-selected="true" aria-controls="loginForm">Log in</button>
-        <button type="button" role="tab" id="tabRegister" aria-selected="false" aria-controls="registerForm">Register</button>
-      </div>
-
-      <form id="loginForm" novalidate>
-        <label for="loginEmail">Email</label>
-        <input id="loginEmail" type="email" autocomplete="email" required>
-        <label for="loginPassword">Password</label>
-        <input id="loginPassword" type="password" autocomplete="current-password" required>
-        <p id="loginError" class="form-error" role="alert" hidden></p>
-        <button id="loginBtn" class="btn primary block" type="submit">Log in</button>
+      <form id="phoneForm" novalidate>
+        <label for="phoneInput">Mobile number (with country code)</label>
+        <input id="phoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="+919876543210" required>
+        <p class="muted hint">We will text you a 6-digit code. Carrier SMS rates may apply.</p>
+        <p id="phoneError" class="form-error" role="alert" hidden></p>
+        <button id="sendOtpBtn" class="btn primary block" type="submit">Send code</button>
       </form>
 
-      <form id="registerForm" novalidate hidden>
-        <label for="regName">Display name</label>
-        <input id="regName" type="text" autocomplete="nickname" minlength="2" maxlength="40" required>
-        <label for="regEmail">Email</label>
-        <input id="regEmail" type="email" autocomplete="email" required>
-        <label for="regPassword">Password (min. 6 characters)</label>
-        <input id="regPassword" type="password" autocomplete="new-password" minlength="6" required>
-        <p id="registerError" class="form-error" role="alert" hidden></p>
-        <button id="registerBtn" class="btn primary block" type="submit">Create account</button>
+      <form id="otpForm" novalidate hidden>
+        <p class="muted">Code sent to <strong id="otpSentTo"></strong></p>
+        <label for="otpInput">6-digit code</label>
+        <input id="otpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required>
+        <p id="otpError" class="form-error" role="alert" hidden></p>
+        <button id="verifyBtn" class="btn primary block" type="submit">Verify and continue</button>
+        <div class="row split">
+          <button id="resendBtn" class="btn ghost" type="button" disabled>Resend code</button>
+          <button id="changeNumberBtn" class="btn ghost" type="button">Change number</button>
+        </div>
       </form>
+
+      <div id="recaptcha-container"></div>
+      <p class="fine-print">Protected by reCAPTCHA. The Google
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and
+        <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> apply.</p>
     </div>
   </main>
 
@@ -57,19 +57,24 @@
       <p id="meName" class="muted me"></p>
 
       <section id="newChatPanel" class="new-chat" hidden>
-        <form id="searchForm" role="search">
-          <label for="searchInput">Find a user by display name</label>
+        <form id="searchForm" role="search" novalidate>
+          <label for="searchInput">Find someone by phone number</label>
           <div class="row">
-            <input id="searchInput" type="search" minlength="2" maxlength="40" placeholder="At least 2 letters" autocomplete="off">
-            <button class="btn" type="submit">Search</button>
+            <input id="searchInput" type="tel" inputmode="tel" placeholder="+919876543210" autocomplete="off">
+            <button id="searchBtn" class="btn" type="submit">Find</button>
           </div>
         </form>
         <p id="searchStatus" class="muted" role="status"></p>
-        <ul id="searchResults" class="list"></ul>
+        <div id="foundCard" class="found-card" hidden>
+          <p id="foundPhone" class="item-name"></p>
+          <label for="foundName">Contact name (optional; only you can see it)</label>
+          <input id="foundName" type="text" maxlength="40" autocomplete="off">
+          <button id="foundStartBtn" class="btn primary block" type="button">Start chat</button>
+        </div>
       </section>
 
       <div id="convLoading" class="center"><div class="spinner" role="status" aria-label="Loading conversations"></div></div>
-      <p id="convEmpty" class="empty" hidden>No conversations yet. Choose “New chat” to find someone.</p>
+      <p id="convEmpty" class="empty" hidden>No conversations yet. Choose “New chat” and enter a phone number.</p>
       <ul id="convList" class="list scroll"></ul>
     </aside>
 
@@ -79,7 +84,20 @@
         <header class="pane-header">
           <button id="backBtn" class="icon-btn" type="button" aria-label="Back to conversations">&#8592;</button>
           <h2 id="chatTitle"></h2>
+          <button id="editContactBtn" class="btn small ghost" type="button" aria-expanded="false" aria-controls="contactPanel">Contact name</button>
         </header>
+        <section id="contactPanel" class="contact-panel" hidden>
+          <p id="contactPhone" class="muted"></p>
+          <form id="contactForm" novalidate>
+            <label for="contactName">Name (only you can see it)</label>
+            <div class="row">
+              <input id="contactName" type="text" maxlength="40" autocomplete="off">
+              <button id="contactSaveBtn" class="btn primary" type="submit">Save</button>
+              <button id="contactDeleteBtn" class="btn" type="button">Remove</button>
+            </div>
+            <p id="contactError" class="form-error" role="alert" hidden></p>
+          </form>
+        </section>
         <div id="messageScroll" class="messages-wrap">
           <div id="msgLoading" class="center"><div class="spinner" role="status" aria-label="Loading messages"></div></div>
           <p id="msgEmpty" class="empty" hidden>No messages yet. Say hello!</p>
