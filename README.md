@@ -1,27 +1,14 @@
-# Pulse Messenger (Stage 1)
+# Pulse Messenger (phone-number edition)
 
-One-to-one text messaging with Firebase Authentication (email/password) and Cloud Firestore real-time listeners.
-Static frontend (HTML, CSS, vanilla JS ES modules), hostable on GitHub Pages.
+Phone/SMS-OTP sign-in, private contact names, and one-to-one text messaging.
+Frontend: static HTML/CSS/vanilla JS on GitHub Pages. Backend: Firebase Auth, Firestore, one Cloud Function.
 
-## Files
-- `index.html`, `css/style.css`: single-page UI (login/register, chat list, chat screen)
-- `js/firebase.js`: Firebase init and **your web config (must be edited)**
-- `js/auth.js`: register, login, logout, profile creation, error messages
-- `js/chats.js`: conversation list, user search, create/find conversation
-- `js/messages.js`: message listener and sending
-- `js/app.js`: UI logic
-- `firestore.rules`: security rules (deploy these)
+- `index.html`, `css/style.css`, `js/*.js`: the app (`js/firebase.js` needs your web config)
+- `functions/`: `lookupUserByPhone` callable (exact-number lookup, rate-limited)
+- `firestore.rules`, `firebase.json`: rules and deploy config
 
-## Data model
-- `users/{uid}`: `uid, displayName, searchName, createdAt` (readable by signed-in users)
-- `users/{uid}/private/account`: `email` (owner only)
-- `conversations/{minUid_maxUid}`: `participants, participantNames, createdAt, updatedAt, lastMessageText, lastSenderId`
-- `conversations/{id}/messages/{messageId}`: `conversationId, senderId, text, createdAt`
+Data: `users/{uid}` (uid, phoneNumber, createdAt), `users/{uid}/contacts/{contactUid}` (private names),
+`conversations/{minUid_maxUid}` (+ `messages` subcollection).
 
-## Limitations
-- Not end-to-end encrypted. Messages are readable by the Firebase project owner.
-- Only the newest 200 messages per conversation are loaded.
-- User search is a case-insensitive prefix match on display name; names are not unique.
-- Display names in conversations are copied at creation and are not updated if a name changes later.
-- Only email/password sign-in is implemented. Phone auth would need an additional sign-in function that calls `ensureProfile`.
-- Must be served over http(s); opening `index.html` via `file://` will not load ES modules.
+Limits: not end-to-end encrypted. Anyone who knows a registered number can find that account and message it.
+Cloud Functions and SMS beyond test numbers need the Blaze plan. Serve over http(s), not file://.
