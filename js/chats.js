@@ -1,19 +1,26 @@
-import { db } from "./firebase.js";
+import { db, functions } from "./firebase.js";
 import {
-  collection, doc, getDoc, setDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp
+  collection, doc, getDoc, setDoc, query, where, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
-// Deterministic ID (sorted UIDs) guarantees one conversation per pair of users.
+// Deterministic ID (sorted UIDs) guarantees one conversation per pair of users (unchanged from before).
 export const conversationIdFor = (a, b) => [a, b].sort().join("_");
-
 export const millis = (ts) => (ts && ts.toMillis ? ts.toMillis() : 0);
+
+// Returns an E.164 number (+countrycode...) or null.
+export function normalizePhone(raw) {
+  const p = String(raw || "").replace(/[\s\-().]/g, "");
+  return /^\+[1-9]\d{7,14}$/.test(p) ? p : null;
+}
 
 export function otherParticipant(conv, myUid) {
   const uid = conv.participants.find((u) => u !== myUid);
-  const name = (conv.participantNames && conv.participantNames[uid]) || "Unknown user";
-  return { uid, name };
+  const phone = (conv.participantPhones && conv.participantPhones[uid]) || null; // null for legacy conversations
+  return { uid, phone };
 }
 
+// me / other: { uid, phoneNumber }
 export async function getOrCreateConversation(me, other) {
   const id = conversationIdFor(me.uid, other.uid);
   const ref = doc(db, "conversations", id);
@@ -24,7 +31,7 @@ export async function getOrCreateConversation(me, other) {
   try {
     await setDoc(ref, {
       participants,
-      participantNames: { [me.uid]: me.displayName, [other.uid]: other.displayName },
+      participantPhones: { [me.uid]: me.phoneNumber, [other.uid]: other.phoneNumber },
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastMessageText: "",
@@ -48,19 +55,10 @@ export function subscribeConversations(uid, onData, onError) {
   }, onError);
 }
 
-// Case-insensitive prefix search on displayName (stored lowercase as searchName).
-export async function searchUsers(term, myUid) {
-  const t = term.trim().toLowerCase();
-  if (t.length < 2) return [];
-  const { getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-  const q = query(
-    collection(db, "users"),
-    orderBy("searchName"),
-    where("searchName", ">=", t),
-    where("searchName", "<=", t + "\uf8ff"),
-    limit(10)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data()).filter((u) => u.uid !== myUid)
-    .map((u) => ({ uid: u.uid, displayName: u.displayName }));
+// Secure lookup by full phone number via the trusted Cloud Function.
+// Resolves to { found: boolean, uid?, phoneNumber?, self? }.
+export async function lookupUserByPhone(phoneNumber) {
+  const call = httpsCallable(functions, "lookupUserByPhone");
+  const res = await call({ phoneNumber });
+  return res.data;
 }
