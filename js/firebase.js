@@ -1,13 +1,26 @@
 
-import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeApp,
+  getApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getAuth
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+import {
+  getFunctions
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
-// Pulse Messenger — Firebase configuration
+/* =========================================
+   PULSE MESSENGER — FIREBASE CONFIG
+========================================= */
+
 export const firebaseConfig = {
   apiKey: "AIzaSyBsLUYT2Nxvuse9gxhMuTLjsvyvOu92yU8",
   authDomain: "project-antisemitism.firebaseapp.com",
@@ -18,10 +31,10 @@ export const firebaseConfig = {
   measurementId: "G-TN848G7VXT"
 };
 
-// Cloud Functions deployment region
-export const FUNCTIONS_REGION = "us-central1";
+/* =========================================
+   CONFIGURATION VALIDATION
+========================================= */
 
-// Validate required configuration values
 const requiredKeys = [
   "apiKey",
   "authDomain",
@@ -40,12 +53,44 @@ export const isConfigured = requiredKeys.every((key) => {
   );
 });
 
-// Initialize Firebase only once
-export const app = getApps().length
+if (!isConfigured) {
+  console.error(
+    "[Pulse Messenger] Firebase configuration is incomplete."
+  );
+}
+
+/* =========================================
+   FIREBASE INITIALIZATION
+========================================= */
+
+export const app = getApps().length > 0
   ? getApp()
   : initializeApp(firebaseConfig);
 
-// Firebase services
+/* =========================================
+   FIREBASE SERVICES
+========================================= */
+
+// Authentication — required for phone OTP.
 export const auth = getAuth(app);
+
+// Firestore — users, contacts, chats and messages.
 export const db = getFirestore(app);
-export const functions = getFunctions(app, FUNCTIONS_REGION);
+
+// Cloud Functions region must match deployment.
+export const FUNCTIONS_REGION = "us-central1";
+export const functions = getFunctions(
+  app,
+  FUNCTIONS_REGION
+);
+
+/* =========================================
+   DEVELOPMENT DIAGNOSTICS
+========================================= */
+
+console.info("[Pulse Messenger] Firebase initialized:", {
+  projectId: firebaseConfig.projectId,
+  authReady: Boolean(auth),
+  firestoreReady: Boolean(db),
+  functionsRegion: FUNCTIONS_REGION
+});
