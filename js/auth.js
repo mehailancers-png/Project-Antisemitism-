@@ -15,79 +15,30 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* =========================================
-   PULSE MESSENGER — ERROR HANDLING
-========================================= */
+/* =====================================
+   ERROR HANDLING
+===================================== */
 
 const ERROR_MESSAGES = {
-  "auth/invalid-phone-number":
-    "Invalid phone number. Use your country code, e.g. +919876543210.",
-
-  "auth/missing-phone-number":
-    "Please enter your phone number.",
-
-  "auth/invalid-verification-code":
-    "Incorrect OTP. Please try again.",
-
-  "auth/missing-verification-code":
-    "Enter the 6-digit OTP.",
-
-  "auth/code-expired":
-    "OTP expired. Request a new OTP.",
-
-  "auth/session-expired":
-    "Verification session expired. Request a new OTP.",
-
-  "auth/quota-exceeded":
-    "Firebase SMS quota exceeded. Try again later.",
-
-  "auth/too-many-requests":
-    "Too many attempts. Please wait before trying again.",
-
-  "auth/captcha-check-failed":
-    "App verification failed. Reload the page and try again.",
-
-  "auth/invalid-app-credential":
-    "App verification failed. Check Firebase authorized domains and reCAPTCHA.",
-
-  "auth/app-not-authorized":
-    "This website is not authorized in Firebase Authentication.",
-
-  "auth/network-request-failed":
-    "Network error. Check your internet connection.",
-
-  "auth/operation-not-allowed":
-    "Phone sign-in is disabled or SMS to this region is blocked.",
-
-  "auth/user-disabled":
-    "This account has been disabled.",
-
-  "auth/phone-required":
-    "A verified phone number is required.",
-
-  "auth/invalid-verification-id":
-    "Verification session is invalid. Request a new OTP.",
-
-  "auth/internal-error":
-    "Firebase encountered an internal error. Reload and try again.",
-
-  "app/empty":
-    "Message cannot be empty.",
-
-  "app/too-long":
-    "Message exceeds the 2000-character limit.",
-
-  "permission-denied":
-    "You do not have permission to perform this action.",
-
-  "unavailable":
-    "Server unavailable. Check your connection.",
-
-  "resource-exhausted":
-    "Service quota reached. Try again later.",
-
-  "functions/internal":
-    "Phone lookup service is unavailable. Check Cloud Function deployment."
+  "auth/invalid-phone-number": "Invalid phone number. Use +91 followed by your 10-digit number.",
+  "auth/missing-phone-number": "Please enter your phone number.",
+  "auth/invalid-verification-code": "Incorrect OTP. Try again.",
+  "auth/missing-verification-code": "Enter the 6-digit OTP.",
+  "auth/code-expired": "OTP expired. Request a new code.",
+  "auth/session-expired": "Session expired. Request a new OTP.",
+  "auth/quota-exceeded": "Firebase SMS quota reached.",
+  "auth/too-many-requests": "Too many attempts. Please wait.",
+  "auth/captcha-check-failed": "Verification failed. Reload and try again.",
+  "auth/invalid-app-credential": "App verification failed. Check Firebase domain settings.",
+  "auth/app-not-authorized": "This website is not authorized in Firebase.",
+  "auth/network-request-failed": "Network error. Check your internet.",
+  "auth/operation-not-allowed": "Phone authentication is disabled or SMS region is blocked.",
+  "auth/user-disabled": "This account has been disabled.",
+  "auth/phone-required": "A verified phone number is required.",
+  "permission-denied": "You do not have permission.",
+  "unavailable": "Server unavailable. Check your connection.",
+  "resource-exhausted": "Service quota reached.",
+  "functions/internal": "Phone lookup service is unavailable."
 };
 
 export function friendlyError(error) {
@@ -95,7 +46,7 @@ export function friendlyError(error) {
 
   console.error(
     "[Pulse Messenger Error]",
-    code || "unknown",
+    code,
     error?.message || error
   );
 
@@ -106,38 +57,27 @@ export function friendlyError(error) {
   }
 
   return ERROR_MESSAGES[code] ||
-    error?.message ||
     "Something went wrong. Please try again.";
 }
 
-/* =========================================
-   PHONE NUMBER NORMALIZATION
-========================================= */
+/* =====================================
+   PHONE NUMBER
+===================================== */
 
 function normalizePhone(phone) {
   let value = String(phone || "").trim();
 
-  if (!value) {
-    throw Object.assign(
-      new Error(ERROR_MESSAGES["auth/missing-phone-number"]),
-      { code: "auth/missing-phone-number" }
-    );
-  }
-
-  // Remove common formatting characters.
   value = value.replace(/[\s()-]/g, "");
 
-  // Convert Indian 10-digit numbers to E.164.
   if (/^\d{10}$/.test(value)) {
     value = "+91" + value;
   } else if (/^91\d{10}$/.test(value)) {
     value = "+" + value;
   }
 
-  // E.164 format: + followed by 8–15 digits.
   if (!/^\+[1-9]\d{7,14}$/.test(value)) {
     throw Object.assign(
-      new Error(ERROR_MESSAGES["auth/invalid-phone-number"]),
+      new Error("Enter a valid phone number with country code."),
       { code: "auth/invalid-phone-number" }
     );
   }
@@ -145,9 +85,9 @@ function normalizePhone(phone) {
   return value;
 }
 
-/* =========================================
-   INVISIBLE RECAPTCHA + OTP
-========================================= */
+/* =====================================
+   INVISIBLE RECAPTCHA
+===================================== */
 
 const RECAPTCHA_ID = "recaptcha-container";
 
@@ -160,7 +100,7 @@ export function resetRecaptcha() {
     try {
       verifier.clear();
     } catch (error) {
-      console.warn("reCAPTCHA cleanup failed:", error);
+      console.warn("reCAPTCHA cleanup:", error);
     }
   }
 
@@ -178,26 +118,35 @@ function createRecaptcha() {
 
   if (!container) {
     throw new Error(
-      'Missing element: add <div id="recaptcha-container"></div> to index.html.'
+      'Missing recaptcha-container element in index.html.'
     );
   }
 
-  // Firebase JS SDK 10.12.2 constructor order:
-  // container, parameters, auth.
+  if (!auth) {
+    throw new Error("Firebase Auth is not initialized.");
+  }
+
+  // CORRECT Firebase SDK 10.12.2 argument order:
+  // auth, container, parameters
+
   verifier = new RecaptchaVerifier(
+    auth,
     RECAPTCHA_ID,
     {
       size: "invisible"
-    },
-    auth
+    }
   );
 
   return verifier;
 }
 
+/* =====================================
+   SEND OTP
+===================================== */
+
 export async function sendOtp(phone) {
   if (sendingOtp) {
-    throw new Error("An OTP request is already in progress.");
+    throw new Error("OTP request already in progress.");
   }
 
   sendingOtp = true;
@@ -205,13 +154,11 @@ export async function sendOtp(phone) {
   try {
     const normalizedPhone = normalizePhone(phone);
 
-    // Remove a previous verifier before starting another attempt.
-    resetRecaptcha();
     confirmation = null;
+    resetRecaptcha();
 
     const currentVerifier = createRecaptcha();
 
-    // Initialize the verifier before requesting SMS.
     await currentVerifier.render();
 
     confirmation = await signInWithPhoneNumber(
@@ -220,41 +167,49 @@ export async function sendOtp(phone) {
       currentVerifier
     );
 
+    console.info("[Pulse Messenger] OTP request successful.");
+
     return true;
+
   } catch (error) {
     console.error(
-      "[Pulse Messenger] sendOtp failed:",
+      "[Pulse Messenger] OTP failed:",
       error?.code,
-      error?.message
+      error?.message,
+      error?.stack
     );
 
     confirmation = null;
     resetRecaptcha();
 
     throw error;
+
   } finally {
     sendingOtp = false;
   }
 }
+
+/* =====================================
+   VERIFY OTP
+===================================== */
 
 export async function verifyOtp(code) {
   const otp = String(code || "").trim();
 
   if (!/^\d{6}$/.test(otp)) {
     throw Object.assign(
-      new Error(ERROR_MESSAGES["auth/missing-verification-code"]),
+      new Error("Enter the 6-digit OTP."),
       { code: "auth/missing-verification-code" }
     );
   }
 
   if (!confirmation) {
     throw Object.assign(
-      new Error(ERROR_MESSAGES["auth/session-expired"]),
+      new Error("Request a new OTP first."),
       { code: "auth/session-expired" }
     );
   }
 
-  // Preserve the confirmation session when the code is incorrect.
   const result = await confirmation.confirm(otp);
 
   confirmation = null;
@@ -263,14 +218,18 @@ export async function verifyOtp(code) {
   return result.user;
 }
 
+/* =====================================
+   CANCEL OTP
+===================================== */
+
 export function cancelOtp() {
   confirmation = null;
   resetRecaptcha();
 }
 
-/* =========================================
-   AUTH STATE + LOGOUT
-========================================= */
+/* =====================================
+   AUTH STATE
+===================================== */
 
 export function logout() {
   confirmation = null;
@@ -283,21 +242,20 @@ export function watchAuth(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
-/* =========================================
+/* =====================================
    USER PROFILE
-   Firestore: users/{uid}
-========================================= */
+===================================== */
 
 const profileJobs = new Map();
 
 export async function ensureProfile(user) {
   if (!user?.uid) {
-    throw new Error("A signed-in user is required.");
+    throw new Error("User is not authenticated.");
   }
 
   if (!user.phoneNumber) {
     throw Object.assign(
-      new Error(ERROR_MESSAGES["auth/phone-required"]),
+      new Error("Phone number is required."),
       { code: "auth/phone-required" }
     );
   }
