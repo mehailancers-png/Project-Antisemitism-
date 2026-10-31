@@ -47,7 +47,8 @@ export function friendlyError(error) {
   console.error(
     "[Pulse Messenger Error]",
     code,
-    error?.message || error
+    error?.message || error,
+    error?.stack
   );
 
   if (code.startsWith("functions/")) {
@@ -57,6 +58,7 @@ export function friendlyError(error) {
   }
 
   return ERROR_MESSAGES[code] ||
+    error?.message ||
     "Something went wrong. Please try again.";
 }
 
@@ -66,7 +68,6 @@ export function friendlyError(error) {
 
 function normalizePhone(phone) {
   let value = String(phone || "").trim();
-
   value = value.replace(/[\s()-]/g, "");
 
   if (/^\d{10}$/.test(value)) {
@@ -86,7 +87,7 @@ function normalizePhone(phone) {
 }
 
 /* =====================================
-   INVISIBLE RECAPTCHA
+   RECAPTCHA CONFIGURATION
 ===================================== */
 
 const RECAPTCHA_ID = "recaptcha-container";
@@ -100,7 +101,7 @@ export function resetRecaptcha() {
     try {
       verifier.clear();
     } catch (error) {
-      console.warn("reCAPTCHA cleanup:", error);
+      console.warn("[Pulse] reCAPTCHA cleanup:", error);
     }
   }
 
@@ -116,26 +117,42 @@ export function resetRecaptcha() {
 function createRecaptcha() {
   const container = document.getElementById(RECAPTCHA_ID);
 
+  console.log("[Pulse Debug] Auth:", auth);
+  console.log("[Pulse Debug] Auth app:", auth?.app);
+  console.log("[Pulse Debug] Container:", container);
+
   if (!container) {
     throw new Error(
-      'Missing recaptcha-container element in index.html.'
+      "Missing recaptcha-container in index.html."
     );
   }
 
-  if (!auth) {
-    throw new Error("Firebase Auth is not initialized.");
+  if (!auth || !auth.app) {
+    throw new Error(
+      "Firebase Auth instance is not initialized correctly."
+    );
   }
 
-  // CORRECT Firebase SDK 10.12.2 argument order:
-  // auth, container, parameters
+  if (verifier) {
+    verifier.clear();
+    verifier = null;
+  }
 
   verifier = new RecaptchaVerifier(
     auth,
-    RECAPTCHA_ID,
+    container,
     {
-      size: "invisible"
+      size: "invisible",
+      callback: () => {
+        console.log("[Pulse Debug] reCAPTCHA solved.");
+      },
+      "expired-callback": () => {
+        console.warn("[Pulse Debug] reCAPTCHA expired.");
+      }
     }
   );
+
+  console.log("[Pulse Debug] RecaptchaVerifier created.");
 
   return verifier;
 }
@@ -161,19 +178,21 @@ export async function sendOtp(phone) {
 
     await currentVerifier.render();
 
+    console.log("[Pulse Debug] reCAPTCHA rendered.");
+
     confirmation = await signInWithPhoneNumber(
       auth,
       normalizedPhone,
       currentVerifier
     );
 
-    console.info("[Pulse Messenger] OTP request successful.");
+    console.log("[Pulse] OTP request successful.");
 
     return true;
 
   } catch (error) {
     console.error(
-      "[Pulse Messenger] OTP failed:",
+      "[Pulse] OTP request failed:",
       error?.code,
       error?.message,
       error?.stack
